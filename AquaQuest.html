@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AquaQuest — Water Saving Quiz Game</title>
+  <style>
+    :root{--bg:#e6f7ff;--card:#ffffff;--accent:#0b83d6;--muted:#6b7280;--success:#16a34a}
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#f0fbff);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .app{width:100%;max-width:980px;background:var(--card);border-radius:12px;box-shadow:0 8px 30px rgba(11,131,214,.08);overflow:hidden}
+    header{display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid #eef6fb}
+    header img{width:56px;height:56px;border-radius:10px;object-fit:cover}
+    header h1{margin:0;font-size:20px;color:var(--accent)}
+    .grid{display:grid;grid-template-columns:320px 1fr;gap:18px;padding:22px}
+    .panel{background:#fbfeff;border-radius:10px;padding:12px;border:1px solid #eef7fb}
+    .landing-hero{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;padding:28px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+    .btn-primary{background:var(--accent);color:white}--
+    .btn-ghost{background:transparent;border:1px solid #cce7fb;color:var(--accent)}
+    .menu{display:flex;flex-direction:column;gap:8px}
+    .menu button{width:100%;text-align:left;padding:10px;border-radius:8px;border:1px solid transparent;background:linear-gradient(180deg,#fff,#fbfeff)}
+    .small{font-size:13px;color:var(--muted)}
+    .question-card{padding:18px;border-radius:10px;border:1px solid #eef7fb;background:linear-gradient(180deg,#ffffff,#f7feff)}
+    .options{display:grid;gap:10px;margin-top:12px}
+    .option{padding:10px;border-radius:8px;border:1px solid #e6f0f6;cursor:pointer}
+    .option.selected{box-shadow:inset 0 0 0 2px rgba(11,131,214,.08);border-color:var(--accent)}
+    .feedback{margin-top:12px;padding:10px;border-radius:8px;background:#f0fbf4;border:1px solid #dff6e7;color:var(--success)}
+    footer{padding:12px 22px;border-top:1px solid #eef6fb;font-size:13px;color:var(--muted);display:flex;justify-content:space-between}
+    .modules{display:flex;flex-direction:column;gap:8px}
+    .hidden{display:none}
+    .score-badge{background:linear-gradient(90deg,#e0f5ff,#d1f0ff);padding:8px;border-radius:8px;font-weight:700;color:var(--accent)}
+    @media (max-width:880px){.grid{grid-template-columns:1fr;}.panel{order:2}}
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header>
+      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect rx='20' width='200' height='200' fill='%230b83d6'/><text x='50%' y='54%' font-size='48' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'>AQ</text></svg>" alt="AquaQuest"/>
+      <div>
+        <h1>AquaQuest — Water Saving Quiz Game</h1>
+        <div class="small" id="subtitle">Learn. Save. Play.</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <div class="score-badge" id="savedScore">No progress</div>
+        <button class="btn btn-ghost" id="resetProgress">Reset</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <aside class="panel">
+        <div id="landing" class="landing-hero">
+          <h2>Welcome to AquaQuest</h2>
+          <p class="small">A friendly quiz to learn about saving water — pick your age group and dive in!</p>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" id="playBtn">Play</button>
+            <button class="btn btn-ghost" id="instructionsBtn">Instructions</button>
+          </div>
+          <img src="https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=800&auto=format&fit=crop&crop=faces" alt="water" style="width:100%;border-radius:10px;margin-top:10px;object-fit:cover;max-height:150px;"/>
+        </div>
+
+        <div id="ageSelect" class="hidden">
+          <h3>Select Age Group</h3>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <button class="btn" data-age="kids" id="ageKids">Kids (6–12)</button>
+            <button class="btn" data-age="teens" id="ageTeens">Teens (13–18)</button>
+            <button class="btn" data-age="adults" id="ageAdults">Adults (18+)</button>
+          </div>
+          <div style="margin-top:12px" class="small">Choose the group that best fits you to set difficulty & content.</div>
+        </div>
+
+        <div id="mainMenu" class="hidden">
+          <h3>Main Menu</h3>
+          <div class="menu">
+            <button id="startQuizBtn">Start Quiz</button>
+            <button id="viewModulesBtn">View Modules</button>
+            <button id="instructionsMenuBtn">Instructions</button>
+            <button id="exitBtn">Exit</button>
+          </div>
+          <div style="margin-top:12px" class="small">Current: <span id="currentAge">-</span> • Difficulty: <span id="currentDifficulty">-</span></div>
+        </div>
+
+        <div id="modulesPanel" class="hidden">
+          <h3>Modules</h3>
+          <div class="modules">
+            <details>
+              <summary>Home Water Management</summary>
+              <div class="small">Tips on fixing leaks, low-flow fixtures, and efficient daily habits.</div>
+            </details>
+            <details>
+              <summary>Rainwater Harvesting</summary>
+              <div class="small">Basics of collecting rainwater safely for reuse and groundwater recharge.</div>
+            </details>
+            <details>
+              <summary>Water Budgeting</summary>
+              <div class="small">How to plan household water use and set targets to reduce consumption.</div>
+            </details>
+            <details>
+              <summary>Community Awareness</summary>
+              <div class="small">How to run neighbourhood campaigns and school projects for water conservation.</div>
+            </details>
+            <details>
+              <summary>Rewards & Progress</summary>
+              <div class="small">Complete quizzes to earn badges and unlock harder levels.</div>
+            </details>
+          </div>
+        </div>
+
+        <div id="instructionsPanel" class="hidden">
+          <h3>How to play</h3>
+          <ol class="small">
+            <li>Choose your age group — this sets question difficulty.</li>
+            <li>Start the quiz and answer multiple-choice questions.</li>
+            <li>Correct answers give you points and motivational feedback.</li>
+            <li>Finish the level to unlock the next difficulty (if you score enough).</li>
+            <li>Your progress is saved in your browser.</li>
+          </ol>
+        </div>
+
+      </aside>
+
+      <main class="panel">
+        <div id="welcomeMain">
+          <div class="question-card">
+            <h2 id="mainTitle">AquaQuest</h2>
+            <p class="small">Pick Play to begin — quizzes are short and fun.</p>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-primary" id="enterAgeFlow">Play</button>
+              <button class="btn" id="openMenu">Open Menu</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="quizArea" class="hidden">
+          <div class="question-card">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="small">Level: <strong id="levelLabel">-</strong></div>
+                <h3 id="questionText">Question will appear here</h3>
+              </div>
+              <div class="small">Q <span id="qIndex">0</span>/<span id="qTotal">0</span></div>
+            </div>
+
+            <div class="options" id="optionsList"></div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+              <div>
+                <button class="btn" id="prevQ">Previous</button>
+                <button class="btn" id="nextQ">Next</button>
+              </div>
+              <div style="display:flex;gap:8px">
+                <div class="small">Score: <strong id="sessionScore">0</strong></div>
+                <button class="btn btn-primary" id="finishQuiz">Finish</button>
+              </div>
+            </div>
+
+            <div id="explanation" class="hidden feedback"></div>
+          </div>
+        </div>
+
+        <div id="endScreen" class="hidden">
+          <div class="question-card">
+            <h2 id="endTitle">Quiz Complete</h2>
+            <p class="small">Your results:</p>
+            <div style="display:flex;gap:12px;align-items:center;margin-top:10px">
+              <div style="font-size:32px;font-weight:800;color:var(--accent)" id="finalScore">0</div>
+              <div class="small" id="finalMessage">Great job, Water Saver!</div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-primary" id="playAgain">Play Again</button>
+              <button class="btn" id="backToMenu">Back to Menu</button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+
+    <footer>
+      <div>Made with 💧 for water-literate citizens</div>
+      <div class="small">Local progress saved automatically</div>
+    </footer>
+  </div>
+
+  <script>
+    /* ---------- Simple question banks (example) ---------- */
+    const QUESTION_BANK = {
+      kids: [
+        {q: 'Which of these saves the most water when brushing teeth?', options:['Leaving tap on','Turning tap off while brushing','Rinsing once at the end','Using a bucket'], a:1, exp:'Turn tap off while brushing to save several liters each time.'},
+        {q: 'What is rainwater harvesting?', options:['Catching rainwater for reuse','A type of cloud','Planting trees only','Boiling rainwater'], a:0, exp:'Rainwater harvesting collects roof/runoff water for non-potable or recharge uses.'},
+        {q: 'Fixing a leaking tap helps by...', options:['Wasting more water','Saving water','Increasing pressure','No change'], a:1, exp:'Even small leaks waste many liters over time.'},
+        {q: 'Taking shorter showers will...', options:['Use more water','Save water','Cause floods','Stop rain'], a:1, exp:'Shorter showers reduce household water consumption significantly.'},
+        {q: 'Which uses less water?', options:['Bath','Quick shower','Both same','Depends on soap'], a:1, exp:'A quick shower uses less water than filling a bathtub.'}
+      ],
+      teens: [
+        {q:'What's a water budget?', options:['A financial plan for buying water','Plan for household water use','A type of bottle','A cloud pattern'], a:1, exp:'Water budgeting sets targets and tracks consumption to reduce use.'},
+        {q:'Greywater is...', options:['Hot water only','Wastewater from sinks/showers reused','Drinking water','Rainwater only'], a:1, exp:'Greywater can be treated and reused for irrigation or flushing.'},
+        {q:'Low-flow fixtures do what?', options:['Lower water pressure','Reduce water per use','Increase bills','Make water hot'], a:1, exp:'They reduce liters used per minute or per flush without losing function.'},
+        {q:'Best way to save water in the garden?', options:['Overwatering','Drip irrigation','Water at noon','Using clean potable water only'], a:1, exp:'Drip irrigation targets roots and reduces evaporation.'},
+        {q:'How often should you check for leaks?', options:['Never','Monthly','Every 10 years','Only when it floods'], a:1, exp:'Regular checks help catch leaks early.'}
+      ],
+      adults: [
+        {q:'What is the primary benefit of recharge pits?', options:['Fertilizer production','Groundwater recharge','Decorative garden','Heating water'], a:1, exp:'Recharge pits help rain percolate to recharge aquifers.'},
+        {q:'Which policy helps urban water equity?', options:['Metering & tariffs','Removing meters','Unlimited supply','No maintenance'], a:0, exp:'Metering with fair tariffs encourages conservation and funds services.'},
+        {q:'What is the typical yield unit for rainwater harvesting?', options:['Liters per sq.m.','Kilograms per liter','Meters per second','Cubic miles'], a:0, exp:'Yield is commonly estimated in liters per square meter of catchment.'},
+        {q:'Best practice for community water projects?', options:['Top-down only','Participatory planning','Ignoring maintenance','Using only bottled water'], a:1, exp:'Community participation ensures relevance and long-term sustainability.'},
+        {q:'What does “dual plumbing” mean?', options:['Two pipes: potable and non-potable','Double drainpipes','Two kitchens','Two water tanks'], a:0, exp:'Dual plumbing separates potable supply from reused grey/rainwater lines.'}
+      ]
+    };
+
+    /* ---------- App state ---------- */
+    const state = {
+      userName: '',
+      ageGroup: null, // 'kids','teens','adults'
+      difficulty: null, // easy/medium/hard (derived)
+      questions: [],
+      currentIndex: 0,
+      score: 0,
+      answers: {},
+    };
+
+    /* ---------- Elements ---------- */
+    const el = id => document.getElementById(id);
+    const playBtn = el('playBtn');
+    const instructionsBtn = el('instructionsBtn');
+    const landing = el('landing');
+    const ageSelect = el('ageSelect');
+    const ageKids = el('ageKids');
+    const ageTeens = el('ageTeens');
+    const ageAdults = el('ageAdults');
+    const mainMenu = el('mainMenu');
+    const startQuizBtn = el('startQuizBtn');
+    const viewModulesBtn = el('viewModulesBtn');
+    const instructionsMenuBtn = el('instructionsMenuBtn');
+    const exitBtn = el('exitBtn');
+    const modulesPanel = el('modulesPanel');
+    const instructionsPanel = el('instructionsPanel');
+    const currentAge = el('currentAge');
+    const currentDifficulty = el('currentDifficulty');
+    const welcomeMain = el('welcomeMain');
+    const enterAgeFlow = el('enterAgeFlow');
+    const openMenu = el('openMenu');
+    const quizArea = el('quizArea');
+    const qText = el('questionText');
+    const optionsList = el('optionsList');
+    const qIndex = el('qIndex');
+    const qTotal = el('qTotal');
+    const prevQ = el('prevQ');
+    const nextQ = el('nextQ');
+    const sessionScore = el('sessionScore');
+    const explanation = el('explanation');
+    const finishQuiz = el('finishQuiz');
+    const endScreen = el('endScreen');
+    const finalScore = el('finalScore');
+    const finalMessage = el('finalMessage');
+    const playAgain = el('playAgain');
+    const backToMenu = el('backToMenu');
+    const savedScore = el('savedScore');
+    const resetProgress = el('resetProgress');
+
+    /* ---------- Local storage helpers ---------- */
+    const STORAGE_KEY = 'aquaquest_progress_v1';
+    function saveProgress(){
+      const payload = { userName: state.userName, ageGroup: state.ageGroup, difficulty: state.difficulty, lastScore: state.score, answers: state.answers, timestamp: Date.now() };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      updateSavedBadge();
+    }
+    function loadProgress(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return null;
+      try{ return JSON.parse(raw);}catch(e){return null}
+    }
+    function updateSavedBadge(){
+      const p = loadProgress();
+      if(!p) { savedScore.textContent = 'No progress'; return; }
+      const date = new Date(p.timestamp);
+      savedScore.textContent = `${p.ageGroup||'?' } • ${p.lastScore||0} pts • ${date.toLocaleString()}`;
+    }
+
+    resetProgress.addEventListener('click',()=>{ localStorage.removeItem(STORAGE_KEY); updateSavedBadge(); alert('Progress reset'); });
+
+    /* ---------- UI flows ---------- */
+    playBtn.addEventListener('click', ()=>{ landing.classList.add('hidden'); ageSelect.classList.remove('hidden'); });
+    enterAgeFlow.addEventListener('click', ()=>{ landing.classList.add('hidden'); ageSelect.classList.remove('hidden'); });
+    instructionsBtn.addEventListener('click', ()=>{ landing.classList.add('hidden'); instructionsPanel.classList.remove('hidden'); });
+
+    [ageKids,ageTeens,ageAdults].forEach(btn=>btn.addEventListener('click', e=>{
+      const age = e.currentTarget.dataset.age;
+      setAgeGroup(age);
+      ageSelect.classList.add('hidden');
+      showMainMenu();
+    }));
+
+    openMenu.addEventListener('click', showMainMenu);
+
+    function setAgeGroup(age){
+      state.ageGroup = age;
+      state.difficulty = (age==='kids'?'Easy': age==='teens'?'Medium':'Hard');
+      currentAge.textContent = age;
+      currentDifficulty.textContent = state.difficulty;
+      // preload questions
+      state.questions = shuffleArray(QUESTION_BANK[age]).slice();
+      state.currentIndex = 0;
+      state.score = 0;
+      state.answers = {};
+      updateSavedBadge();
+    }
+
+    function showMainMenu(){
+      mainMenu.classList.remove('hidden');
+      modulesPanel.classList.add('hidden');
+      instructionsPanel.classList.add('hidden');
+      welcomeMain.classList.remove('hidden');
+      quizArea.classList.add('hidden');
+      endScreen.classList.add('hidden');
+    }
+
+    viewModulesBtn.addEventListener('click', ()=>{ mainMenu.classList.add('hidden'); modulesPanel.classList.remove('hidden'); });
+    instructionsMenuBtn.addEventListener('click', ()=>{ mainMenu.classList.add('hidden'); instructionsPanel.classList.remove('hidden'); });
+    exitBtn.addEventListener('click', ()=>{ mainMenu.classList.add('hidden'); landing.classList.remove('hidden'); });
+
+    startQuizBtn.addEventListener('click', ()=>{
+      if(!state.ageGroup){ alert('Please pick an age group first.'); return; }
+      startQuiz();
+    });
+
+    /* ---------- Quiz logic ---------- */
+    function startQuiz(){
+      welcomeMain.classList.add('hidden');
+      mainMenu.classList.add('hidden');
+      quizArea.classList.remove('hidden');
+      explanation.classList.add('hidden');
+      state.currentIndex = 0;
+      state.score = 0;
+      state.answers = {};
+      renderQuestion();
+    }
+
+    function renderQuestion(){
+      const q = state.questions[state.currentIndex];
+      qText.textContent = q.q;
+      optionsList.innerHTML = '';
+      q.options.forEach((opt,i)=>{
+        const btn = document.createElement('div');
+        btn.className = 'option';
+        btn.textContent = opt;
+        btn.dataset.idx = i;
+        if(state.answers[state.currentIndex]!==undefined){
+          btn.classList.toggle('selected', state.answers[state.currentIndex]==i);
+        }
+        btn.addEventListener('click', ()=>selectOption(i,btn));
+        optionsList.appendChild(btn);
+      });
+      qIndex.textContent = state.currentIndex+1;
+      qTotal.textContent = state.questions.length;
+      sessionScore.textContent = state.score;
+      explanation.classList.add('hidden');
+    }
+
+    function selectOption(i,btn){
+      // mark answer
+      state.answers[state.currentIndex] = i;
+      // visual
+      [...optionsList.children].forEach(c=>c.classList.remove('selected'));
+      btn.classList.add('selected');
+      // immediate feedback & scoring
+      const q = state.questions[state.currentIndex];
+      if(i===q.a){
+        // correct
+        if(!q._awarded){ state.score += 10; q._awarded = true; }
+        explanation.textContent = 'Correct! ' + (q.exp||'');
+        explanation.classList.remove('hidden');
+        explanation.style.background = '#f0fbf4';
+      } else {
+        // incorrect
+        if(q._awarded){ state.score -= 10; q._awarded = false; }
+        explanation.textContent = 'Not quite. Tip: ' + (q.exp||'');
+        explanation.classList.remove('hidden');
+        explanation.style.background = '#fff6f6';
+      }
+      sessionScore.textContent = state.score;
+      saveProgress();
+    }
+
+    prevQ.addEventListener('click', ()=>{
+      if(state.currentIndex>0){ state.currentIndex--; renderQuestion(); }
+    });
+    nextQ.addEventListener('click', ()=>{
+      if(state.currentIndex < state.questions.length-1){ state.currentIndex++; renderQuestion(); }
+    });
+
+    finishQuiz.addEventListener('click', ()=>{
+      // finalize score: ensure each question contribution accounted
+      // (already handled in selectOption awarding). Show end screen.
+      endQuiz();
+    });
+
+    function endQuiz(){
+      quizArea.classList.add('hidden');
+      endScreen.classList.remove('hidden');
+      finalScore.textContent = state.score;
+      finalMessage.textContent = motivationalMessage(state.score);
+      // unlock logic: if score >= threshold, mark unlocked
+      const threshold = Math.floor(state.questions.length*8); // arbitrary threshold
+      const p = loadProgress() || {};
+      p.unlocked = p.unlocked || {};
+      const unlockKey = state.ageGroup;
+      if(state.score >= threshold){ p.unlocked[unlockKey] = true; }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({...p, lastScore: state.score, ageGroup: state.ageGroup, difficulty: state.difficulty, timestamp: Date.now()}));
+      updateSavedBadge();
+    }
+
+    playAgain.addEventListener('click', ()=>{
+      // restart same config
+      state.currentIndex = 0; state.score = 0; state.answers = {}; state.questions = shuffleArray(QUESTION_BANK[state.ageGroup]).slice();
+      endScreen.classList.add('hidden');
+      quizArea.classList.remove('hidden');
+      renderQuestion();
+    });
+
+    backToMenu.addEventListener('click', ()=>{ showMainMenu(); });
+
+    /* ---------- Utilities ---------- */
+    function shuffleArray(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+      return a;
+    }
+
+    function motivationalMessage(score){
+      if(score>= (state.questions.length*8)) return 'Amazing — Water Champion! 🌊';
+      if(score>= (state.questions.length*5)) return 'Great job, Water Saver!';
+      if(score>0) return 'Nice effort — keep learning!';
+      return 'Every drop counts — try again!';
+    }
+
+    // initialize
+    (function init(){
+      const p = loadProgress();
+      if(p){
+        // if progress exists, show brief badge and let user continue
+        savedScore.textContent = `${p.ageGroup||'?'} • ${p.lastScore||0} pts • ${new Date(p.timestamp).toLocaleString()}`;
+      }
+      updateSavedBadge();
+    })();
+
+    // keyboard accessibility (simple)
+    document.addEventListener('keydown', e=>{
+      if(e.key === 'ArrowRight') nextQ.click();
+      if(e.key === 'ArrowLeft') prevQ.click();
+    });
+
+  </script>
+</body>
+</html>
